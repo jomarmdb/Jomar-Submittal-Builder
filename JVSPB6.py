@@ -295,7 +295,7 @@ APP_DIR = Path(__file__).parent
 LOGO_FILENAME = "Jomar Valve Logo Red.png"   # <- change if your file name differs
 
 # if you keep it in an assets/ folder:
-default_logo_path = str(APP_DIR / "assets" / LOGO_FILENAME)
+default_logo_path = str(APP_DIR / LOGO_FILENAME)
 
 # (or, if the image lives next to your .py file, use this instead)
 # default_logo_path = str(APP_DIR / LOGO_FILENAME)
