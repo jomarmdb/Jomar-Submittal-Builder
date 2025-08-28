@@ -285,7 +285,20 @@ date_prepared = st.date_input("Date Prepared", key="dp_date")
 bid_date, bid_date_tbc, bid_date_na = bid_date_picker_with_flags("Bid Date", key="bd")
 
 # Default logo path
-default_logo_path = r"C:\Users\Matt.Bianchi\OneDrive - jomar.com\Jomar\Company Info\Logos\Jomar Valve Logo Red.png"
+# near the top with your imports
+from pathlib import Path
+
+# resolve path to the repo folder (works locally and on Streamlit Cloud)
+APP_DIR = Path(__file__).parent
+
+# update the filename to match EXACTLY (Linux is case-sensitive)
+LOGO_FILENAME = "Jomar Valve Logo Red.png"   # <- change if your file name differs
+
+# if you keep it in an assets/ folder:
+default_logo_path = str(APP_DIR / "assets" / LOGO_FILENAME)
+
+# (or, if the image lives next to your .py file, use this instead)
+# default_logo_path = str(APP_DIR / LOGO_FILENAME)
 
 # ---- Reorder UI BEFORE the button ----
 ordered_files = []
