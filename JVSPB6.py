@@ -60,18 +60,43 @@ def draw_logo_centered_between_page_top_and_bar_top(c, logo_path, max_width, pag
     c.drawImage(logo_path, x, y, width=w, height=h, preserveAspectRatio=True, mask='auto')
     return h
 
-def draw_centered_stack(c, x_center, y_center, lines, sizes, font_name, color_rgb, leading=26, letter_spacing=0.0):
-    """Draw a vertical stack of centered lines, optional letter spacing (tracking)."""
-    total_h = (len(lines) - 1) * leading
-    first_baseline_y = y_center + (total_h / 2.0)
+def draw_centered_stack(
+    c, x_center, y_center, lines, sizes, font_name, color_rgb, leading=26, letter_spacing=0.0, optical_adjust=0.0
+):
+    """
+    Vertically center a multi-line block using the font's ascent/descent so the
+    visible text is centered (not just baselines). 'optical_adjust' lets you nudge
+    the block a point or two if desired.
+    """
+    if not lines:
+        return
+
+    # Font metrics (ReportLab returns 1000-em units; scale by point size)
+    asc_u = pdfmetrics.getAscent(font_name) / 1000.0
+    des_u = abs(pdfmetrics.getDescent(font_name) / 1000.0)
+
+    asc0      = asc_u * sizes[0]          # ascent of first line
+    des_last  = des_u * sizes[-1]         # descent of last line
+    interline = leading * (len(lines) - 1)
+
+    # Total visible block height = top of first line to bottom of last line
+    block_h = asc0 + interline + des_last
+
+    # Baseline of the first line so that the block's vertical center == y_center
+    first_baseline_y = y_center + (block_h / 2.0) - asc0 + optical_adjust
+
     c.setFillColorRGB(*color_rgb)
+
     for i, (txt, sz) in enumerate(zip(lines, sizes)):
         y = first_baseline_y - i * leading
+        c.setFont(font_name, sz)
         if letter_spacing and letter_spacing > 0:
+            # Center with tracking: widen width by char spacing * number of gaps
             n_gaps = max(len(txt) - 1, 0)
             base_w = pdfmetrics.stringWidth(txt, font_name, sz)
             w = base_w + letter_spacing * n_gaps
             x_left = x_center - (w / 2.0)
+
             t = c.beginText()
             t.setTextOrigin(x_left, y)
             t.setFont(font_name, sz)
@@ -82,7 +107,6 @@ def draw_centered_stack(c, x_center, y_center, lines, sizes, font_name, color_rg
             t.textLine(txt)
             c.drawText(t)
         else:
-            c.setFont(font_name, sz)
             c.drawCentredString(x_center, y, txt)
 
 def format_mdY(d, blank="To Be Confirmed"):
@@ -192,7 +216,7 @@ def make_cover_pdf(
     BAR_COLOR = "#BC141B"
     bar_rgb   = hex_to_rgb01(BAR_COLOR)
     bar_height = 140
-    bar_y      = (height / 2.0) - (bar_height / 2.0) - 6
+    bar_y      = (height / 2.0) - (bar_height / 2.0)
     bar_top_y  = bar_y + bar_height
 
     c.setFillColorRGB(*bar_rgb)
