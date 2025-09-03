@@ -341,7 +341,7 @@ def make_cover_pdf(
         y_center=bottom_block_y,
         lines=lines_bottom,
         sizes=[12] * len(lines_bottom),
-        font_name=FONT_TEXT,
+        font_name=ProximaNova-Regular,
         color_rgb=(0, 0, 0),
         leading=18,
     )
