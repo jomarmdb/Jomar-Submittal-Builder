@@ -46,6 +46,39 @@ def hex_to_rgb01(hex_color: str):
     b = int(h[4:6], 16) / 255.0
     return r, g, b
 
+def fit_multiline_text(lines, font_name, bar_width, bar_height,
+                       side_pad=48, v_pad=18,
+                       max_pt=36, min_pt=14,
+                       leading_factor=1.12, letter_spacing=0.0):
+    """
+    Compute a single font size (applied to all lines) and matching leading
+    that fit within the red bar's width/height after padding.
+    """
+    # Safe drawing box inside the bar
+    safe_w = max(bar_width - 2*side_pad, 1)
+    safe_h = max(bar_height - 2*v_pad, 1)
+
+    # Width cap: the size at which the *widest* line would just fit
+    caps = []
+    for txt in lines:
+        if not txt:
+            continue
+        base_w_at_1pt = pdfmetrics.stringWidth(txt, font_name, 1.0)
+        # letter_spacing is absolute points (not scaled by size)
+        extra = letter_spacing * max(len(txt) - 1, 0)
+        unit_w = base_w_at_1pt  # we'll keep letter_spacing=0 for titles by default
+        if unit_w > 0:
+            caps.append(safe_w / unit_w)
+    width_cap = min(caps) if caps else max_pt
+
+    # Height cap: total stack height must fit (N-1) * leading
+    n = len(lines)
+    height_cap = (safe_h / ((n - 1) * leading_factor)) if n > 1 else max_pt
+
+    size = max(min(width_cap, height_cap, max_pt), min_pt)
+    leading = size * leading_factor
+    return [size] * n, leading
+
 def draw_logo_centered_between_page_top_and_bar_top(c, logo_path, max_width, page_width, page_height, bar_top_y):
     """Draw logo centered horizontally, vertically centered between page top and top of the red bar."""
     img = ImageReader(logo_path)
@@ -235,23 +268,36 @@ def make_cover_pdf(
     else:
         st.warning(f"Logo file not found at: {logo_path}")
 
-    # ---- Title inside the bar ----
-    title_lines = [
-        (project_name or "TO BE CONFIRMED").upper(),
-        (project_location or "TO BE CONFIRMED").upper(),
-        "SUBMITTAL PACKAGE",
-    ]
-    title_sizes = [28, 28, 28]
-    draw_centered_stack(
-        c,
-        x_center=width/2.0,
-        y_center=bar_y + bar_height/2.0,
-        lines=title_lines,
-        sizes=title_sizes,
-        font_name=FONT_TITLE,
-        color_rgb=(1, 1, 1),
-        leading=32,
-    )
+# ---- Title inside the bar (auto-scaling to fit) ----
+title_lines = [
+    (project_name or "TO BE CONFIRMED").upper(),
+    (project_location or "TO BE CONFIRMED").upper(),
+    "SUBMITTAL PACKAGE",
+]
+
+sizes, dyn_leading = fit_multiline_text(
+    lines=title_lines,
+    font_name=FONT_TITLE,
+    bar_width=width,           # the bar spans full page width
+    bar_height=bar_height,     # its actual height
+    side_pad=48,               # left/right breathing room inside the bar
+    v_pad=18,                  # top/bottom breathing room inside the bar
+    max_pt=36,                 # don’t grow past this
+    min_pt=14,                 # but don’t get too tiny
+    leading_factor=1.12,       # line spacing relative to size
+    letter_spacing=0.0,        # keep at 0 for crisp fit
+)
+
+draw_centered_stack(
+    c,
+    x_center=width / 2.0,
+    y_center=bar_y + bar_height / 2.0,
+    lines=title_lines,
+    sizes=sizes,
+    font_name=FONT_TITLE,
+    color_rgb=(1, 1, 1),
+    leading=dyn_leading,
+)
 
     # ---- Bottom centered lines ----
     c.setFillColorRGB(0, 0, 0)
