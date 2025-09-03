@@ -281,7 +281,7 @@ def make_cover_pdf(
         bar_height=bar_height,
         side_pad=48,
         v_pad=18,
-        max_pt=36,
+        max_pt=30,
         min_pt=14,
         leading_factor=1.12,
         letter_spacing=0.0,
