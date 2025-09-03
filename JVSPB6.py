@@ -12,7 +12,7 @@ def _get_sort_labels_fn():
     try:
         from streamlit_sortables import sort_items
         def sort_labels(labels, key="file_order"):
-            st.markdown("**Drag to set the order of spec sheets (cover page will remain first):**")
+            st.markdown("**Click & Drag to set the order of spec sheets (Cover page will remain first):**")
             return sort_items(labels, direction="vertical", multi_containers=False, key=key)
         return sort_labels
     except Exception:
