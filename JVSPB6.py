@@ -24,7 +24,7 @@ def load_pdf_font() -> str:
         return "Helvetica"
 
 # use this in your cover page builder
-FONT_NAME = load_pdf_font()
+FONT_NAME = "ProximaNova-Regular"  # or load_pdf_font() that returns this or "Helvetica" 
 
 # ---------- Drag & drop ordering (with fallback) ----------
 def _get_sort_labels_fn():
