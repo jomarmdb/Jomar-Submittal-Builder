@@ -1,30 +1,11 @@
 import streamlit as st
-from pathlib import Path
 from PyPDF2 import PdfMerger
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfbase import pdfmetrics
 from reportlab.lib.utils import ImageReader
 from datetime import datetime
-from reportlab.pdfbase.ttfonts import TTFont
 import tempfile, os
-
-
-# resolve path relative to this file
-APP_DIR = Path(__file__).parent
-FONT_PATH = APP_DIR / "assets" / "fonts" / "PROXIMA-NOVA-FONT.ttf"
-
-def load_pdf_font() -> str:
-    """Register the licensed font so it embeds into PDFs. Returns usable font name or Helvetica."""
-    try:
-        pdfmetrics.registerFont(TTFont("ProximaNova-Regular", str(FONT_PATH)))
-        return "ProximaNova-Regular"
-    except Exception as e:
-        st.warning(f"Could not load custom font: {e}. Falling back to Helvetica.")
-        return "Helvetica"
-
-# use this in your cover page builder
-FONT_NAME = "ProximaNova-Regular"  # or load_pdf_font() that returns this or "Helvetica" 
 
 # ---------- Drag & drop ordering (with fallback) ----------
 def _get_sort_labels_fn():
@@ -255,8 +236,8 @@ def make_cover_pdf(
     width, height = letter
 
     # Fonts (built-in)
-    FONT_TITLE = "ProximaNova-Regular"
-    FONT_TEXT  = "ProximaNova-Regular"
+    FONT_TITLE = "Helvetica"
+    FONT_TEXT  = "Helvetica"
 
     # ---- Light gray inner border ----
     border_inset = 36
