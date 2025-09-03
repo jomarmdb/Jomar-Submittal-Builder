@@ -300,7 +300,7 @@ draw_centered_stack(
 )
 
     # ---- Bottom centered lines ----
-c.setFillColorRGB(0, 0, 0)
+    c.setFillColorRGB(0, 0, 0)
     bottom_block_y = 140
 
     role_label  = (party_label or "Recipient").upper()
