@@ -225,8 +225,8 @@ def make_cover_pdf(
     logo_path: str,
     project_name: str,
     project_location: str,
-    party_label: str,   # role (Contractor/Engineer/Distributor/Utility) or None
-    party_name: str,    # company/name text input (may be empty)
+    party_label: str,
+    party_name: str,
     date_prepared,
     bid_date,
     bid_date_tbc: bool = False,
@@ -246,8 +246,8 @@ def make_cover_pdf(
     c.rect(border_inset, border_inset, width - 2*border_inset, height - 2*border_inset, stroke=1, fill=0)
 
     # ---- Red bar ----
-    BAR_COLOR = "#BC141B"
-    bar_rgb   = hex_to_rgb01(BAR_COLOR)
+    BAR_COLOR  = "#BC141B"
+    bar_rgb    = hex_to_rgb01(BAR_COLOR)
     bar_height = 140
     bar_y      = (height / 2.0) - (bar_height / 2.0)
     bar_top_y  = bar_y + bar_height
@@ -268,36 +268,34 @@ def make_cover_pdf(
     else:
         st.warning(f"Logo file not found at: {logo_path}")
 
-# ---- Title inside the bar (auto-scaling to fit) ----
-title_lines = [
-    (project_name or "TO BE CONFIRMED").upper(),
-    (project_location or "TO BE CONFIRMED").upper(),
-    "SUBMITTAL PACKAGE",
-]
-
-sizes, dyn_leading = fit_multiline_text(
-    lines=title_lines,
-    font_name=FONT_TITLE,
-    bar_width=width,           # the bar spans full page width
-    bar_height=bar_height,     # its actual height
-    side_pad=48,               # left/right breathing room inside the bar
-    v_pad=18,                  # top/bottom breathing room inside the bar
-    max_pt=36,                 # don’t grow past this
-    min_pt=14,                 # but don’t get too tiny
-    leading_factor=1.12,       # line spacing relative to size
-    letter_spacing=0.0,        # keep at 0 for crisp fit
-)
-
-draw_centered_stack(
-    c,
-    x_center=width / 2.0,
-    y_center=bar_y + bar_height / 2.0,
-    lines=title_lines,
-    sizes=sizes,
-    font_name=FONT_TITLE,
-    color_rgb=(1, 1, 1),
-    leading=dyn_leading,
-)
+    # ---- Title inside the bar (auto-scaling to fit) ----
+    title_lines = [
+        (project_name or "TO BE CONFIRMED").upper(),
+        (project_location or "TO BE CONFIRMED").upper(),
+        "SUBMITTAL PACKAGE",
+    ]
+    sizes, dyn_leading = fit_multiline_text(
+        lines=title_lines,
+        font_name=FONT_TITLE,
+        bar_width=width,
+        bar_height=bar_height,
+        side_pad=48,
+        v_pad=18,
+        max_pt=36,
+        min_pt=14,
+        leading_factor=1.12,
+        letter_spacing=0.0,
+    )
+    draw_centered_stack(
+        c,
+        x_center=width / 2.0,
+        y_center=bar_y + bar_height / 2.0,
+        lines=title_lines,
+        sizes=sizes,
+        font_name=FONT_TITLE,
+        color_rgb=(1, 1, 1),
+        leading=dyn_leading,
+    )
 
     # ---- Bottom centered lines ----
     c.setFillColorRGB(0, 0, 0)
@@ -309,10 +307,7 @@ draw_centered_stack(
 
     date_prep_txt = format_mdY(date_prepared, blank="To Be Confirmed").upper()
 
-    lines_bottom = [
-        first_line,
-        f"DATE PREPARED: {date_prep_txt}",
-    ]
+    lines_bottom = [first_line, f"DATE PREPARED: {date_prep_txt}"]
 
     # BID DATE handling
     if not bid_date_na:
@@ -323,7 +318,7 @@ draw_centered_stack(
 
     draw_centered_stack(
         c,
-        x_center=width/2.0,
+        x_center=width / 2.0,
         y_center=bottom_block_y,
         lines=lines_bottom,
         sizes=[12] * len(lines_bottom),
