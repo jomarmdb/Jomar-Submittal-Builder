@@ -1,87 +1,25 @@
-name: Keep Streamlit Awake
-
-on:
-  schedule:
-    - cron: "0 * * * *"   # Every hour
-  workflow_dispatch:
-
-jobs:
-  wake-app:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.11"
-
-      - name: Install Google Chrome
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wget gnupg unzip curl
-          
-          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-          
-          echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google.list
-          
-          sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
-
-      - name: Install Python packages
-        run: |
-          pip install selenium webdriver-manager
-
-      - name: Wake Streamlit App
-        run: |
-          python - <<EOF
-          from selenium import webdriver
-          from selenium.webdriver.chrome.options import Options
-          from selenium.webdriver.chrome.service import Service
-          from webdriver_manager.chrome import ChromeDriverManager
-          import time
-
-          options = Options()
-
-          options.add_argument("--headless=new")
-          options.add_argument("--no-sandbox")
-          options.add_argument("--disable-dev-shm-usage")
-          options.add_argument("--disable-gpu")
-          options.add_argument("--window-size=1920,1080")
-
-          options.binary_location = "/usr/bin/google-chrome"
-
-          print("Starting Chrome...")
-
-          driver = webdriver.Chrome(
-              service=Service(ChromeDriverManager().install()),
-              options=options
-          )
-
-          try:
+try:
               url = "https://jomar-submittal-builder.streamlit.app/"
-
               print(f"Opening {url}")
-
               driver.get(url)
 
-              # Give Streamlit time to fully wake up
-              time.sleep(60)
+              # 1. Look for the 'Wake up' button specifically
+              time.sleep(10) # Wait for sleep screen to appear
+              try:
+                  # Streamlit buttons are usually inside a specific tag or have specific text
+                  wake_button = driver.find_element("xpath", "//button[contains(text(), 'Wake up')]")
+                  if wake_button:
+                      print("Found the Sleep Screen! Clicking 'Wake up' now...")
+                      wake_button.click()
+                      time.sleep(30) # Give it extra time to spin up after clicking
+              except:
+                  print("No 'Wake up' button found; app might already be awake.")
 
+              # 2. Give Streamlit time to fully render
+              time.sleep(20)
               print("Page title:", driver.title)
 
-              # Simulate interaction
+              # 3. Simulate interaction
               driver.execute_script("window.scrollTo(0, 1000);")
-
               time.sleep(5)
-
               print("Success! App was visited.")
-
-          except Exception as e:
-              print("ERROR:", str(e))
-
-          finally:
-              driver.quit()
-          EOF
