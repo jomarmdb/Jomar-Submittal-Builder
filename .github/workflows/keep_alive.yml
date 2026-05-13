@@ -10,5 +10,5 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Send Keep-Alive Ping
-        run: curl -ILs https://jomar-submittal-builder.streamlit.app/
+    - name: Send Keep-Alive Ping
+     run: curl -fsL https://jomar-submittal-builder.streamlit.app/ -o /dev/null
