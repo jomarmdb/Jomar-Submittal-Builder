@@ -2,29 +2,29 @@ name: Keep Jomar App Awake
 
 on:
   schedule:
-    - cron: '0 */3 * * *'
-  workflow_dispatch:
+    - cron: '0 */3 * * *' # Every 3 hours
+  workflow_dispatch: 
 
 env:
-  # This clears the Node.js 20 warning
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # This tells GitHub to use the new engine, clearing the main deprecation warning
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   wake-up:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4 # V4 is current, warning is just a GitHub reminder
+        uses: actions/checkout@v4.2.2 # Specifically use the version that supports Node 24
 
       - name: Set up Python
-        uses: actions/setup-python@v5 # Updated to V5
+        uses: actions/setup-python@v5.4.0 # Specifically use the version that supports Node 24
         with:
           python-version: '3.11'
 
-      - name: Install Selenium and Driver
+      - name: Install Selenium
         run: pip install selenium webdriver-manager
 
-      - name: Run Headless Chrome Visit
+      - name: Run Browser Visit
         run: |
           python - <<EOF
           from selenium import webdriver
@@ -37,24 +37,17 @@ jobs:
           options.add_argument("--headless=new")
           options.add_argument("--no-sandbox")
           options.add_argument("--disable-dev-shm-usage")
+          # Pretend to be a real Chrome browser on Windows
           options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
 
-          service = Service(ChromeDriverManager().install())
-          driver = webdriver.Chrome(service=service, options=options)
-
+          driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+          
           print("Visiting Jomar Submittal Builder...")
           driver.get("https://jomar-submittal-builder.streamlit.app/")
           
-          # Wait 20 seconds to ensure Streamlit registers the session
-          time.sleep(20) 
+          # Wait 15 seconds to ensure the 'Wake Up' trigger is sent to Streamlit
+          time.sleep(15)
           
-          print("Page Title:", driver.title)
-          driver.save_screenshot("streamlit_status.png")
+          print("Current Page Title:", driver.title)
           driver.quit()
           EOF
-
-      - name: Upload Status Screenshot
-        uses: actions/upload-artifact@v4
-        with:
-          name: streamlit-screenshot
-          path: streamlit_status.png
