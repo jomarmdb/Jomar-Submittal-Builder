@@ -2,13 +2,14 @@ name: Keep Jomar App Awake
 
 on:
   schedule:
-    - cron: '0 */4 * * *'
+    - cron: '0 */3 * * *' # Runs every 3 hours for extra safety
   workflow_dispatch: 
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Send Keep-Alive Ping
-        # This version ignores the redirect loop and avoids Exit Code 47
-        run: curl -sL --max-redirs 3 https://jomar-submittal-builder.streamlit.app/ || true
+      - name: Knock on Streamlit Port
+        # ncat simply connects to the port and disconnects. 
+        # It ignores all redirects and login walls.
+        run: nc -zv -w 5 jomar-submittal-builder.streamlit.app 443 || true
