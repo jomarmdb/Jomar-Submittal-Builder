@@ -2,44 +2,59 @@ name: Keep Jomar App Awake
 
 on:
   schedule:
-    - cron: '0 */4 * * *'
+    - cron: '0 */3 * * *'
   workflow_dispatch:
+
+env:
+  # This clears the Node.js 20 warning
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   wake-up:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4 # V4 is current, warning is just a GitHub reminder
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5 # Updated to V5
         with:
-          python-version: '3.9'
+          python-version: '3.11'
 
-      - name: Install Selenium
+      - name: Install Selenium and Driver
         run: pip install selenium webdriver-manager
 
-      - name: Run Browser Ping
+      - name: Run Headless Chrome Visit
         run: |
           python - <<EOF
           from selenium import webdriver
           from selenium.webdriver.chrome.options import Options
-          from webdriver_manager.chrome import ChromeDriverManager
           from selenium.webdriver.chrome.service import Service
+          from webdriver_manager.chrome import ChromeDriverManager
+          import time
 
           options = Options()
-          options.add_argument("--headless")
+          options.add_argument("--headless=new")
           options.add_argument("--no-sandbox")
           options.add_argument("--disable-dev-shm-usage")
-          options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+          options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
 
-          driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-          print("Opening Jomar Submittal Builder...")
+          service = Service(ChromeDriverManager().install())
+          driver = webdriver.Chrome(service=service, options=options)
+
+          print("Visiting Jomar Submittal Builder...")
           driver.get("https://jomar-submittal-builder.streamlit.app/")
-          # Stay on the page for 10 seconds to let the 'Wake Up' trigger hit
-          import time
-          time.sleep(10)
-          print("Ping successful!")
+          
+          # Wait 20 seconds to ensure Streamlit registers the session
+          time.sleep(20) 
+          
+          print("Page Title:", driver.title)
+          driver.save_screenshot("streamlit_status.png")
           driver.quit()
           EOF
+
+      - name: Upload Status Screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: streamlit-screenshot
+          path: streamlit_status.png
