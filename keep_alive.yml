@@ -11,4 +11,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping Streamlit App
-        run: curl -I https://share.streamlit.io/jomarmdb/JVSPB6.py/main/main.py
+        run: curl -I https://share.streamlit.io/jomar-submittal-builder/main/JVSPB6.py
