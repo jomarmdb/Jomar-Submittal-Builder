@@ -1,38 +1,75 @@
-name: Keep Jomar App Awake
+name: Keep Streamlit Awake
 
 on:
   schedule:
-    - cron: '0 */3 * * *'
+    - cron: "0 * * * *"   # every hour
   workflow_dispatch:
 
 jobs:
-  wake-up:
+  wake-app:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Wake Streamlit App
+      - name: Install Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install selenium webdriver-manager
+
+      - name: Open Streamlit App
         run: |
           python - <<EOF
-          import requests
+          from selenium import webdriver
+          from selenium.webdriver.chrome.options import Options
+          from selenium.webdriver.chrome.service import Service
+          from webdriver_manager.chrome import ChromeDriverManager
           import time
 
-          url = "https://jomar-submittal-builder.streamlit.app/"
+          options = Options()
 
-          print("Sending request to Streamlit app...")
-          
-          response = requests.get(
-              url,
-              headers={
-                  "User-Agent": "Mozilla/5.0"
-              },
-              timeout=30
+          # REQUIRED for GitHub Actions
+          options.add_argument("--headless")
+          options.add_argument("--no-sandbox")
+          options.add_argument("--disable-dev-shm-usage")
+          options.add_argument("--disable-gpu")
+          options.add_argument("--window-size=1920,1080")
+
+          options.binary_location = "/usr/bin/google-chrome"
+
+          driver = webdriver.Chrome(
+              service=Service(ChromeDriverManager().install()),
+              options=options
           )
 
-          print("Status Code:", response.status_code)
-          print("Response Length:", len(response.text))
+          try:
+              url = "https://jomar-submittal-builder.streamlit.app/"
+              
+              print("Opening app...")
+              driver.get(url)
 
-          # Wait a few seconds so Streamlit finishes waking
-          time.sleep(10)
+              # Wait for Streamlit to fully load
+              time.sleep(45)
 
-          print("Done!")
+              print("Page title:", driver.title)
+
+              # Scroll a little
+              driver.execute_script("window.scrollTo(0, 800);")
+
+              time.sleep(10)
+
+              print("App visit complete.")
+
+          except Exception as e:
+              print("ERROR:", e)
+
+          finally:
+              driver.quit()
           EOF
