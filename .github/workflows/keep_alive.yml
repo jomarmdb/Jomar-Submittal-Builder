@@ -1,25 +1,26 @@
-try:
-              url = "https://jomar-submittal-builder.streamlit.app/"
-              print(f"Opening {url}")
-              driver.get(url)
+name: Streamlit Keep Alive
 
-              # 1. Look for the 'Wake up' button specifically
-              time.sleep(10) # Wait for sleep screen to appear
-              try:
-                  # Streamlit buttons are usually inside a specific tag or have specific text
-                  wake_button = driver.find_element("xpath", "//button[contains(text(), 'Wake up')]")
-                  if wake_button:
-                      print("Found the Sleep Screen! Clicking 'Wake up' now...")
-                      wake_button.click()
-                      time.sleep(30) # Give it extra time to spin up after clicking
-              except:
-                  print("No 'Wake up' button found; app might already be awake.")
+on:
+  schedule:
+    # Runs every 12 hours
+    - cron: '0 */12 * * *'
+  # Allows you to manually run this from the "Actions" tab
+  workflow_dispatch: 
 
-              # 2. Give Streamlit time to fully render
-              time.sleep(20)
-              print("Page title:", driver.title)
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
 
-              # 3. Simulate interaction
-              driver.execute_script("window.scrollTo(0, 1000);")
-              time.sleep(5)
-              print("Success! App was visited.")
+      - name: "Keep Alive Nudge"
+        run: |
+          date > keep_alive.txt
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add keep_alive.txt
+          git commit -m "Keep-alive heartbeat [skip ci]"
+          git push
