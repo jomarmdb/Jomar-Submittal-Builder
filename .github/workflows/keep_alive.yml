@@ -1,33 +1,28 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-import time
+name: Streamlit Keep Alive
 
-# Setup Chrome options for headless mode
-chrome_options = Options()
-chrome_options.add_argument("--headless")
-chrome_options.add_argument("--no-sandbox")
-chrome_options.add_argument("--disable-dev-shm-usage")
+on:
+  schedule:
+    # Runs at 00:00 and 12:00 UTC every day
+    - cron: '0 */12 * * *'
+  # This line creates the "Run workflow" button in the UI
+  workflow_dispatch: 
 
-driver = webdriver.Chrome(options=chrome_options)
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    # This permission is REQUIRED to push the heartbeat file
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-try:
-    driver.get("https://jomar-submittal-builder.streamlit.app/")
-    
-    # Wait up to 15 seconds to see if the "Wake Up" button exists
-    wait = WebDriverWait(driver, 15)
-    button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Yes, get this app back up!')]")))
-    
-    button.click()
-    print("Clicked the wake-up button. Waiting 30s for boot...")
-    time.sleep(30)
-    print("App should be live.")
-
-except Exception as e:
-    # If the button isn't found, the app is likely already awake
-    print("App appears to be already awake or button not found.")
-
-finally:
+      - name: Create Heartbeat
+        run: |
+          echo "Last heartbeat: $(date)" > heartbeat.txt
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add heartbeat.txt
+          git commit -m "Keep-alive nudge [skip ci]" || echo "No changes to commit"
+          git push
     driver.quit()
