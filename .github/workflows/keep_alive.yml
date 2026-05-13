@@ -2,14 +2,44 @@ name: Keep Jomar App Awake
 
 on:
   schedule:
-    - cron: '0 */3 * * *' # Runs every 3 hours for extra safety
-  workflow_dispatch: 
+    - cron: '0 */4 * * *'
+  workflow_dispatch:
 
 jobs:
-  ping:
+  wake-up:
     runs-on: ubuntu-latest
     steps:
-      - name: Knock on Streamlit Port
-        # ncat simply connects to the port and disconnects. 
-        # It ignores all redirects and login walls.
-        run: nc -zv -w 5 jomar-submittal-builder.streamlit.app 443 || true
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Selenium
+        run: pip install selenium webdriver-manager
+
+      - name: Run Browser Ping
+        run: |
+          python - <<EOF
+          from selenium import webdriver
+          from selenium.webdriver.chrome.options import Options
+          from webdriver_manager.chrome import ChromeDriverManager
+          from selenium.webdriver.chrome.service import Service
+
+          options = Options()
+          options.add_argument("--headless")
+          options.add_argument("--no-sandbox")
+          options.add_argument("--disable-dev-shm-usage")
+          options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+
+          driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+          print("Opening Jomar Submittal Builder...")
+          driver.get("https://jomar-submittal-builder.streamlit.app/")
+          # Stay on the page for 10 seconds to let the 'Wake Up' trigger hit
+          import time
+          time.sleep(10)
+          print("Ping successful!")
+          driver.quit()
+          EOF
