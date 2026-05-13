@@ -1,26 +1,33 @@
-name: Streamlit Keep Alive
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import time
 
-on:
-  schedule:
-    # Runs every 12 hours
-    - cron: '0 */12 * * *'
-  # Allows you to manually run this from the "Actions" tab
-  workflow_dispatch: 
+# Setup Chrome options for headless mode
+chrome_options = Options()
+chrome_options.add_argument("--headless")
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--disable-dev-shm-usage")
 
-jobs:
-  keep-alive:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
+driver = webdriver.Chrome(options=chrome_options)
 
-      - name: "Keep Alive Nudge"
-        run: |
-          date > keep_alive.txt
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add keep_alive.txt
-          git commit -m "Keep-alive heartbeat [skip ci]"
-          git push
+try:
+    driver.get("https://jomar-submittal-builder.streamlit.app/")
+    
+    # Wait up to 15 seconds to see if the "Wake Up" button exists
+    wait = WebDriverWait(driver, 15)
+    button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Yes, get this app back up!')]")))
+    
+    button.click()
+    print("Clicked the wake-up button. Waiting 30s for boot...")
+    time.sleep(30)
+    print("App should be live.")
+
+except Exception as e:
+    # If the button isn't found, the app is likely already awake
+    print("App appears to be already awake or button not found.")
+
+finally:
+    driver.quit()
