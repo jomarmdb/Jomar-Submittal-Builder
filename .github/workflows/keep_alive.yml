@@ -14,11 +14,25 @@ jobs:
         run: |
           python - <<EOF
           import requests
+          import time
 
           url = "https://jomar-submittal-builder.streamlit.app/"
 
-          response = requests.get(url)
+          print("Sending request to Streamlit app...")
+          
+          response = requests.get(
+              url,
+              headers={
+                  "User-Agent": "Mozilla/5.0"
+              },
+              timeout=30
+          )
 
           print("Status Code:", response.status_code)
-          print("App pinged successfully!")
+          print("Response Length:", len(response.text))
+
+          # Wait a few seconds so Streamlit finishes waking
+          time.sleep(10)
+
+          print("Done!")
           EOF
