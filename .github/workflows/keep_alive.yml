@@ -2,30 +2,31 @@ name: Keep Jomar App Awake
 
 on:
   schedule:
-    - cron: '0 */3 * * *' # Runs every 3 hours to stay ahead of the sleep timer
-  workflow_dispatch:      # Allows you to run it manually for testing
+    - cron: '0 */3 * * *'
+  workflow_dispatch: 
 
-env:
-  # This suppresses the Node.js 20 deprecation warnings
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+# We remove the global FORCE variable because it often triggers 
+# the warning you're seeing by "forcing" a mismatch.
+# Instead, we let GitHub handle the compatibility layer automatically.
 
 jobs:
   wake-up:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4
+        # We don't need extra flags here; GitHub will run this 
+        # in a compatibility mode that is quieter.
 
       - name: Set up Python
-        uses: actions/setup-python@v5.4.0
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Install Selenium and Driver
-        run: |
-          pip install selenium webdriver-manager
+      - name: Install Selenium
+        run: pip install selenium webdriver-manager
 
-      - name: Run Human-Simulated Browser Visit
+      - name: Run Browser Visit
         run: |
           python - <<EOF
           from selenium import webdriver
@@ -34,37 +35,21 @@ jobs:
           from webdriver_manager.chrome import ChromeDriverManager
           import time
 
-          # Setup Chrome Options
           options = Options()
           options.add_argument("--headless=new")
           options.add_argument("--no-sandbox")
           options.add_argument("--disable-dev-shm-usage")
           options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
 
-          # Initialize Driver
           service = Service(ChromeDriverManager().install())
           driver = webdriver.Chrome(service=service, options=options)
 
           try:
-              print("Visiting Jomar Submittal Builder...")
               driver.get("https://jomar-submittal-builder.streamlit.app/")
-              
-              # 1. Wait for initial load
-              time.sleep(10)
-              
-              # 2. Simulate Human Interaction (Scrolling)
-              # This helps bypass detection that looks for 'static' bot hits
-              print("Simulating human scroll...")
+              time.sleep(15) 
               driver.execute_script("window.scrollTo(0, 500);")
-              time.sleep(2)
-              driver.execute_script("window.scrollTo(0, 0);")
-              
-              # 3. Final wait to ensure Streamlit logs the active session
-              time.sleep(10)
-              
-              print(f"Success! Page Title: {driver.title}")
-          except Exception as e:
-              print(f"An error occurred: {e}")
+              time.sleep(5)
+              print(f"Successfully visited Jomar App: {driver.title}")
           finally:
               driver.quit()
           EOF
