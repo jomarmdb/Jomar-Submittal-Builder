@@ -10,10 +10,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Ping Streamlit App
+      - name: Wake Streamlit App
         run: |
-          echo "Waking up Streamlit app..."
+          python - <<EOF
+          import requests
 
-          curl -I https://jomar-submittal-builder.streamlit.app/
+          url = "https://jomar-submittal-builder.streamlit.app/"
 
-          echo "Done!"
+          response = requests.get(url)
+
+          print("Status Code:", response.status_code)
+          print("App pinged successfully!")
+          EOF
