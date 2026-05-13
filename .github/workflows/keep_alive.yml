@@ -5,28 +5,22 @@ on:
     - cron: '0 */3 * * *'
   workflow_dispatch: 
 
-# We remove the global FORCE variable because it often triggers 
-# the warning you're seeing by "forcing" a mismatch.
-# Instead, we let GitHub handle the compatibility layer automatically.
-
 jobs:
   wake-up:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-        # We don't need extra flags here; GitHub will run this 
-        # in a compatibility mode that is quieter.
+        uses: actions/checkout@v4 # Latest version as of 2026
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v5 # Latest version as of 2026
         with:
           python-version: '3.11'
 
       - name: Install Selenium
         run: pip install selenium webdriver-manager
 
-      - name: Run Browser Visit
+      - name: Run Human-Simulated Browser Visit
         run: |
           python - <<EOF
           from selenium import webdriver
@@ -45,11 +39,19 @@ jobs:
           driver = webdriver.Chrome(service=service, options=options)
 
           try:
+              print("Waking up the Jomar Submittal Builder...")
               driver.get("https://jomar-submittal-builder.streamlit.app/")
-              time.sleep(15) 
+              
+              # Wait for the page to load
+              time.sleep(12)
+              
+              # Scroll to simulate human activity
               driver.execute_script("window.scrollTo(0, 500);")
-              time.sleep(5)
-              print(f"Successfully visited Jomar App: {driver.title}")
+              time.sleep(3)
+              
+              print(f"Success! App is awake. Title: {driver.title}")
+          except Exception as e:
+              print(f"Encountered an issue: {e}")
           finally:
               driver.quit()
           EOF
